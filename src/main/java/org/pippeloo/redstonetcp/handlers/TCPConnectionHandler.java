@@ -75,18 +75,25 @@ public class TCPConnectionHandler {
         if (signLocations != null) {
             // Loop through all the signs with the channel
             for (Location signLocation : signLocations) {
+
                 // If the status is true, place a new block next to the sign
                 if (status) {
-                    RedstoneTCP.getInstance().getLogger().info("Placing");
 
                     // Schedule the block placement task to run synchronously on the main server thread
                     new BukkitRunnable() {
                         @Override
                         public void run() {
-                            // Get the block next to the sign
-                            Block adjacentBlock = signLocation.getBlock().getRelative(BlockFace.SOUTH); // Replace SOUTH with the desired direction
 
-                            // Set the adjacent block to a new material (e.g., DIAMOND_BLOCK)
+                            // Get the sign block
+                            Block signBlock = signLocation.getBlock();
+
+                            // get the signs facing direction
+                            int facing = signBlock.getState().getData().getData();
+
+                            // Get the block next to the sign
+                            Block adjacentBlock = signLocation.getBlock().getRelative(getFacing(facing));
+
+                            // Set the adjacent block to redstone block
                             adjacentBlock.setType(Material.REDSTONE_TORCH);
                         }
                     }.runTask(RedstoneTCP.getInstance());
@@ -97,8 +104,16 @@ public class TCPConnectionHandler {
                     new BukkitRunnable() {
                         @Override
                         public void run() {
+
+                            // Get the sign block
+                            Block signBlock = signLocation.getBlock();
+
+                            // get the signs facing direction
+                            int facing = signBlock.getState().getData().getData();
+
+
                             // Get the block next to the sign
-                            Block adjacentBlock = signLocation.getBlock().getRelative(BlockFace.SOUTH); // Replace SOUTH with the desired direction
+                            Block adjacentBlock = signLocation.getBlock().getRelative(getFacing(facing));
 
                             // Set the adjacent block to air
                             adjacentBlock.setType(Material.AIR);
@@ -107,5 +122,19 @@ public class TCPConnectionHandler {
                 }
             }
         }
+    }
+
+    public BlockFace getFacing(int facing) {
+        BlockFace blockFace;
+        if (facing >= 0 && facing <= 3) {
+            blockFace = BlockFace.EAST;
+        } else if (facing >= 4 && facing <= 7) {
+            blockFace = BlockFace.SOUTH;
+        } else if (facing >= 8 && facing <= 11) {
+            blockFace = BlockFace.WEST;
+        } else {
+            blockFace = BlockFace.NORTH;
+        }
+        return blockFace;
     }
 }
