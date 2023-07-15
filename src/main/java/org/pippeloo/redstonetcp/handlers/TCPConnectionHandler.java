@@ -11,7 +11,7 @@ import java.net.Socket;
 import static org.bukkit.Bukkit.getLogger;
 
 public class TCPConnectionHandler {
-    public void handleClientConnection(Socket clientSocket) {
+    public Object handleClientConnection(Socket clientSocket) {
         try {
             // Get input and output streams for the client connection
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -19,6 +19,8 @@ public class TCPConnectionHandler {
 
             // Send a welcome message to the client
             out.println("Welcome to the TCP server!");
+
+            RedstoneTCP.getInstance().setClientSocket(clientSocket);
 
             RedstoneTCP.getInstance().getLogger().info("Client connected from " + clientSocket.getInetAddress().getHostAddress());
 
@@ -33,6 +35,7 @@ public class TCPConnectionHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     public void sendToClient(Socket clientSocket, String message) {
@@ -42,6 +45,7 @@ public class TCPConnectionHandler {
 
             // Send a welcome message to the client
             out.println(message);
+            RedstoneTCP.getInstance().getLogger().info("Sent message to client: " + message);
         } catch (IOException e) {
             e.printStackTrace();
         }

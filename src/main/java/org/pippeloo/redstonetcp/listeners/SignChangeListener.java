@@ -1,27 +1,28 @@
 package org.pippeloo.redstonetcp.listeners;
 
+import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.pippeloo.redstonetcp.RedstoneTCP;
-import org.pippeloo.redstonetcp.classes.TCPSign;
-import org.pippeloo.redstonetcp.classes.TCPSignManager;
-import org.pippeloo.redstonetcp.storage.TCPSignStorage;
+import org.pippeloo.redstonetcp.TCPServer;
+import org.pippeloo.redstonetcp.handlers.TCPConnectionHandler;
+
+import java.net.Socket;
+import java.util.function.Supplier;
 
 public class SignChangeListener implements Listener {
 
-    TCPSignStorage signStorage = new TCPSignStorage();
 
     @EventHandler
     public void onSignChange(SignChangeEvent event) {
-
-        if (!event.getEventName().equals("SignChangeEvent")) {
-            return;
-        }
 
         // Retrieve the configuration file
         FileConfiguration config = RedstoneTCP.getPluginConfig();
@@ -44,50 +45,68 @@ public class SignChangeListener implements Listener {
         boolean isReceiver = event.getLine(0).equals(tcpReceiver);
         String channel = event.getLine(1);
 
-        TCPSign sign = new TCPSign(channel, x, y, z, isReceiver);
-
-        signStorage.addTCPSign(sign);
-
         RedstoneTCP.getInstance().getLogger().info("Sign placed at " + x + ", " + y + ", " + z + " with channel " + channel);
     }
 
     @EventHandler
-    public void onSignBreak(BlockBreakEvent event) {
+    public void onRedstoneEvent(BlockRedstoneEvent event) {
         Block block = event.getBlock();
-        if (!(block.getState() instanceof Sign)) {
-            return;
+        // Check if the block is next to a sign
+        BlockFace[] blockFaces = {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST, BlockFace.DOWN};
+
+        for (BlockFace face : blockFaces) {
+            Block relativeBlock = block.getRelative(face);
+            BlockState state = relativeBlock.getState();
+
+            if (state instanceof Sign) {
+                Sign sign = (Sign) state;
+
+                if (isTransmitter(sign) && hasChannel(sign)) {
+                    // Check if the sign is indirectly powered by redstone
+                    boolean isPowered = !isIndirectlyPowered(sign);
+                    sendSignStatus(sign, isPowered);
+
+                    RedstoneTCP.getInstance().getLogger().info("Sign at " + block.getX() + ", " + block.getY() + ", " + block.getZ() + " is powered: " + isPowered);
+                }
+            }
         }
+    }
 
-        Sign sign = (Sign) block.getState();
-
-        RedstoneTCP.getInstance().getLogger().info("Sign broken");
-        // Retrieve the configuration file
+    private boolean isTransmitter(Sign sign) {
         FileConfiguration config = RedstoneTCP.getPluginConfig();
-
-        // Retrieve the values from the configuration file
-        String tcpReceiver = config.getString("sign-text.tcp-receiver");
         String tcpTransmitter = config.getString("sign-text.tcp-transmitter");
 
+        return sign.getLine(0).equals(tcpTransmitter);
+    }
 
-        if (!sign.getLine(0).equals(tcpTransmitter) && !sign.getLine(0).equals(tcpReceiver)) {
-            return;
+    private boolean hasChannel(Sign sign) {
+        return !sign.getLine(1).isEmpty();
+    }
+
+    private boolean isIndirectlyPowered(Sign sign) {
+        Block block = sign.getBlock();
+        BlockFace[] blockFaces = {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST, BlockFace.DOWN};
+
+        for (BlockFace face : blockFaces) {
+            if (indirectPower(face, block) > 0) {
+                return true;
+            }
         }
 
-        if (sign.getLine(1).isEmpty()) {
-            return;
-        }
+        return false;
+    }
 
-        int x = event.getBlock().getX();
-        int y = event.getBlock().getY();
-        int z = event.getBlock().getZ();
-        boolean isReceiver = sign.getLine(0).equals(tcpReceiver);
-        String channel = sign.getLine(1);
+    private int indirectPower(BlockFace face, Block block) {
+        return block.getRelative(face).getBlockPower(face.getOppositeFace());
+    }
 
-        TCPSign tcpSign = new TCPSign(channel, x, y, z, isReceiver);
+    private void sendSignStatus(Sign sign, boolean isPowered) {
+        TCPConnectionHandler connectionHandler = new TCPConnectionHandler();
+        Socket clientSocket = RedstoneTCP.getInstance().getClientSocket();
 
-        signStorage.removeTCPSign(tcpSign);
+//        Prepare the message in json format
+        String message = "{\"channel\":\"" + sign.getLine(1) + "\",\"status\":" + isPowered + "}";
 
-
-        RedstoneTCP.getInstance().getLogger().info("Sign removed at " + x + ", " + y + ", " + z + " with channel " + channel);
+        connectionHandler.sendToClient(clientSocket, message);
     }
 }

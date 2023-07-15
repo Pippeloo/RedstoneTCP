@@ -3,14 +3,18 @@ package org.pippeloo.redstonetcp;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.pippeloo.redstonetcp.handlers.TCPConnectionHandler;
 import org.pippeloo.redstonetcp.listeners.SignChangeListener;
+
+import java.net.Socket;
 
 
 public final class RedstoneTCP extends JavaPlugin {
 
+    private Socket clientSocket;
     private static RedstoneTCP instance;
     private static FileConfiguration config;
-    TCPServer tcpServer;
+    public TCPServer tcpServer;
 
     @Override
     public void onEnable() {
@@ -48,6 +52,14 @@ public final class RedstoneTCP extends JavaPlugin {
 
     public static FileConfiguration getPluginConfig() {
         return config;
+    }
+
+    public Socket getClientSocket() {
+        return clientSocket;
+    }
+
+    public void setClientSocket(Socket clientSocket) {
+        this.clientSocket = clientSocket;
     }
 
 }
