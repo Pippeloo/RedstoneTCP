@@ -1,5 +1,7 @@
 package org.pippeloo.redstonetcp.handlers;
 
+import org.pippeloo.redstonetcp.RedstoneTCP;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,6 +19,8 @@ public class TCPConnectionHandler {
 
             // Send a welcome message to the client
             out.println("Welcome to the TCP server!");
+
+            RedstoneTCP.getInstance().getLogger().info("Client connected from " + clientSocket.getInetAddress().getHostAddress());
 
             // Receive and log messages from the client
             String message;
