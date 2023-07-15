@@ -1,5 +1,12 @@
 package org.pippeloo.redstonetcp.handlers;
 
+import com.google.gson.Gson;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.json.simple.JSONObject;
 import org.pippeloo.redstonetcp.RedstoneTCP;
 
 import java.io.BufferedReader;
@@ -7,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Map;
 
 import static org.bukkit.Bukkit.getLogger;
 
@@ -55,25 +63,46 @@ public class TCPConnectionHandler {
         }
     }
 
-    public void toggleSigns(String json) {
-        // Get the channel and status from the JSON
-        String channel = json.split(":")[0];
-        Boolean status = json.split(":")[1].equals("true");
+    public void toggleSigns(String message) {
 
-        // Check all signs if the first line matches [TCPR] and the second line matches the channel
-        RedstoneTCP.getInstance().getServer().getWorlds().forEach(world -> {
-            world.getEntities().forEach(entity -> {
-                if (entity.getType().toString().equals("SIGN")) {
-                    if (((org.bukkit.block.Sign) entity).getLine(0).equals("[TCPR]") && ((org.bukkit.block.Sign) entity).getLine(1).equals(channel)) {
-                        // If the sign matches, set a redstone torch on the right side of the sign
-                        if (status) {
-                            entity.getWorld().getBlockAt(entity.getLocation().add(1, 0, 0)).setType(org.bukkit.Material.REDSTONE_TORCH);
-                        } else {
-                            entity.getWorld().getBlockAt(entity.getLocation().add(1, 0, 0)).setType(org.bukkit.Material.AIR);
+        // Get the channel and status from the JSON
+        String channel = message.split(":")[0];
+        Boolean status = message.split(":")[1].equals("true");
+
+        if (RedstoneTCP.getInstance().getSignStorage().getSignLocations(channel) != null) {
+            // Loop through all the signs with the channel
+            for (Location signLocation : RedstoneTCP.getInstance().getSignStorage().getSignLocations(channel)) {
+                // If the status is true, place a new block next to the sign
+                if (status) {
+                    RedstoneTCP.getInstance().getLogger().info("Placing");
+
+                    // Schedule the block placement task to run synchronously on the main server thread
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            // Get the block next to the sign
+                            Block adjacentBlock = signLocation.getBlock().getRelative(BlockFace.SOUTH); // Replace SOUTH with the desired direction
+
+                            // Set the adjacent block to a new material (e.g., DIAMOND_BLOCK)
+                            adjacentBlock.setType(Material.DIAMOND_BLOCK);
                         }
-                    }
+                    }.runTask(RedstoneTCP.getInstance());
+                } else {
+                    // If the status is false, set air next to the sign
+
+                    // Schedule the block removal task to run synchronously on the main server thread
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            // Get the block next to the sign
+                            Block adjacentBlock = signLocation.getBlock().getRelative(BlockFace.SOUTH); // Replace SOUTH with the desired direction
+
+                            // Set the adjacent block to air
+                            adjacentBlock.setType(Material.AIR);
+                        }
+                    }.runTask(RedstoneTCP.getInstance());
                 }
-            });
-        });
+            }
+        }
     }
 }
