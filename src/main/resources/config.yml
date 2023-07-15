@@ -4,3 +4,6 @@ sign-text:
 
 tcp:
   port: 2356
+
+storage:
+  file: "transmissionSigns.yml"
