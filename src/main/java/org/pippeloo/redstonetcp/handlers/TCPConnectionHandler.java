@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
 import java.util.Map;
 
 import static org.bukkit.Bukkit.getLogger;
@@ -69,9 +70,11 @@ public class TCPConnectionHandler {
         String channel = message.split(":")[0];
         Boolean status = message.split(":")[1].equals("true");
 
-        if (RedstoneTCP.getInstance().getSignStorage().getSignLocations(channel) != null) {
+        List<Location> signLocations = RedstoneTCP.getInstance().getSignStorage().getSignLocations(channel);
+
+        if (signLocations != null) {
             // Loop through all the signs with the channel
-            for (Location signLocation : RedstoneTCP.getInstance().getSignStorage().getSignLocations(channel)) {
+            for (Location signLocation : signLocations) {
                 // If the status is true, place a new block next to the sign
                 if (status) {
                     RedstoneTCP.getInstance().getLogger().info("Placing");
