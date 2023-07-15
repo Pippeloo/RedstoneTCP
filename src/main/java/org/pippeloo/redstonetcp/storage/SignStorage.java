@@ -40,29 +40,6 @@ public class SignStorage {
         saveConfig();
     }
 
-    public List<Location> getSignLocations() {
-        List<Location> signLocations = new ArrayList<>();
-        ConfigurationSection section = config.getConfigurationSection("signs");
-        if (section != null) {
-            Set<String> keys = section.getKeys(false);
-            for (String key : keys) {
-                String[] coordinates = key.split(",");
-                if (coordinates.length == 3) {
-                    try {
-                        int x = Integer.parseInt(coordinates[0]);
-                        int y = Integer.parseInt(coordinates[1]);
-                        int z = Integer.parseInt(coordinates[2]);
-                        Location location = new Location(Bukkit.getWorlds().get(0), x, y, z);
-                        signLocations.add(location);
-                    } catch (NumberFormatException ignored) {
-                        // Ignore invalid coordinates
-                    }
-                }
-            }
-        }
-        return signLocations;
-    }
-
     public List<Location> getSignLocations(String channel) {
         RedstoneTCP.getInstance().getLogger().info("Getting sign locations for channel " + channel);
         List<Location> signLocations = new ArrayList<>();
