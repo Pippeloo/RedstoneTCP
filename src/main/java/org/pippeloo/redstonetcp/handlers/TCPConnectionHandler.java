@@ -87,7 +87,7 @@ public class TCPConnectionHandler {
                             Block adjacentBlock = signLocation.getBlock().getRelative(BlockFace.SOUTH); // Replace SOUTH with the desired direction
 
                             // Set the adjacent block to a new material (e.g., DIAMOND_BLOCK)
-                            adjacentBlock.setType(Material.DIAMOND_BLOCK);
+                            adjacentBlock.setType(Material.REDSTONE_TORCH);
                         }
                     }.runTask(RedstoneTCP.getInstance());
                 } else {
