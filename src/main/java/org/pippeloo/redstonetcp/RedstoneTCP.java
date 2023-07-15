@@ -5,6 +5,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.pippeloo.redstonetcp.handlers.TCPConnectionHandler;
 import org.pippeloo.redstonetcp.listeners.SignChangeListener;
+import org.pippeloo.redstonetcp.storage.SignStorage;
 
 import java.net.Socket;
 
@@ -12,6 +13,7 @@ import java.net.Socket;
 public final class RedstoneTCP extends JavaPlugin {
 
     private Socket clientSocket;
+    private SignStorage signStorage;
     private static RedstoneTCP instance;
     private static FileConfiguration config;
     public TCPServer tcpServer;
@@ -30,6 +32,9 @@ public final class RedstoneTCP extends JavaPlugin {
 
         // Start the TCP server
         tcpServer = new TCPServer();
+
+        // Initialize the sign storage
+        signStorage = new SignStorage();
 
         getServer().getPluginManager().registerEvents(new SignChangeListener(), this);
 
@@ -60,6 +65,14 @@ public final class RedstoneTCP extends JavaPlugin {
 
     public void setClientSocket(Socket clientSocket) {
         this.clientSocket = clientSocket;
+    }
+
+    public SignStorage getSignStorage() {
+        return signStorage;
+    }
+
+    public void setSignStorage(SignStorage signStorage) {
+        this.signStorage = signStorage;
     }
 
 }

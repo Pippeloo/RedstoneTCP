@@ -8,6 +8,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.SignChangeEvent;
@@ -46,6 +47,26 @@ public class SignChangeListener implements Listener {
         String channel = event.getLine(1);
 
         RedstoneTCP.getInstance().getLogger().info("Sign placed at " + x + ", " + y + ", " + z + " with channel " + channel);
+
+        // Check if the sign is a receiver
+        if (isReceiver) {
+            // The sign needs to be added to the list of receivers
+            RedstoneTCP.getInstance().getSignStorage().addSign(channel, event.getBlock().getLocation());
+        }
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Block block = event.getBlock();
+        BlockState state = block.getState();
+
+        if (state instanceof Sign) {
+            Sign sign = (Sign) state;
+            // The sign needs to be removed from the list of receivers
+            RedstoneTCP.getInstance().getSignStorage().removeSign(block.getLocation());
+
+            RedstoneTCP.getInstance().getLogger().info("Sign at " + block.getX() + ", " + block.getY() + ", " + block.getZ() + " with channel " + sign.getLine(1) + " removed");
+        }
     }
 
     @EventHandler
