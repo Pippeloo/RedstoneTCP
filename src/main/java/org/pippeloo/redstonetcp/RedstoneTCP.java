@@ -6,11 +6,13 @@ import org.pippeloo.redstonetcp.handlers.TCPConnectionHandler;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 public final class RedstoneTCP extends JavaPlugin {
 
     private ServerSocket serverSocket;
     private final int port = 2356;
+    private boolean acceptingConnections = true;
 
     @Override
     public void onEnable() {
@@ -30,7 +32,7 @@ public final class RedstoneTCP extends JavaPlugin {
         try {
             serverSocket = new ServerSocket(port);
             new Thread(() -> {
-                while(!serverSocket.isClosed()) {
+                while (acceptingConnections) {
                     try {
                         Socket clientSocket = serverSocket.accept();
 
@@ -38,14 +40,15 @@ public final class RedstoneTCP extends JavaPlugin {
                             new TCPConnectionHandler().handleClientConnection(clientSocket);
                         }).start();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        if (!serverSocket.isClosed()) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }).start();
 
             getLogger().info("RedstoneTCP has started up!");
-            getLogger().info("The tcp server is now running on port " + port);
-
+            getLogger().info("The TCP server is now running on port " + port);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -53,10 +56,18 @@ public final class RedstoneTCP extends JavaPlugin {
 
     public void stopTCPServer() {
         try {
-            getLogger().info("Closing the tcp server...");
+            getLogger().info("Closing the TCP server...");
+
+            // Set the flag to stop accepting new connections
+            acceptingConnections = false;
+
+            // Close the server socket
             serverSocket.close();
+
+            getLogger().info("TCP server stopped.");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 }
