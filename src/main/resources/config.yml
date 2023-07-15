@@ -1,0 +1,6 @@
+sign-text:
+  tcp-transmitter: "[TCPT]"
+  tcp-receiver: "[TCPR]"
+
+tcp:
+  port: 2356
