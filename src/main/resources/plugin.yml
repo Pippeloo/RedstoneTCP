@@ -1,0 +1,4 @@
+name: RedstoneTCP
+version: '${project.version}'
+main: org.pippeloo.redstonetcp.RedstoneTCP
+api-version: '1.20'
